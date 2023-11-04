@@ -3,11 +3,21 @@ import java.net.*;
 import java.util.*;
 
 public class CalcServerExMultiple {
+    public static class DivisideByZeroException extends Exception{
+        DivisideByZeroException(){
+            super("Dividing by zero");
+        }
+}
+public static class InvalidExpressionException extends Exception {
+    InvalidExpressionException(String message) {
+        super(message);    
+    }
+}
 
-    public static String calc(String exp) {
+    public static String calc(String exp) throws DivisideByZeroException, InvalidExpressionException{
         StringTokenizer st = new StringTokenizer(exp, " ");
         if (st.countTokens() != 3)
-            return "error";
+            throw new InvalidExpressionException("Invalid expression");
         String res = "";
         int op1 = Integer.parseInt(st.nextToken());
         String opcode = st.nextToken();
@@ -24,11 +34,11 @@ public class CalcServerExMultiple {
                 break;
             case "/":
                 if(op2==0)
-                    return "error";
+                    throw new DivisideByZeroException();
                 res = Integer.toString(op1/op2);
                 break;
             default:
-                res = "error";
+                throw new InvalidExpressionException("Invalid opcode"+opcode);
         }
         return res;
     }
@@ -82,8 +92,14 @@ public class CalcServerExMultiple {
                         break;
                     }
                     System.out.println(inputMessage);
+                    try{
                     String res = calc(inputMessage);
                     out.write(res + "\n");
+                    } catch(DivisideByZeroException e){
+                        out.write(e.getMessage());
+                    }catch(InvalidExpressionException e2){
+                        out.write(e2.getMessage());
+                    }
                     out.flush();
                 }
             } catch (IOException e) {
