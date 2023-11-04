@@ -2,45 +2,47 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 
+//server info 부분 미완성
 public class CalcServerExMultiple {
-    public static class DivisideByZeroException extends Exception{
-        DivisideByZeroException(){
-            super("Dividing by zero");
+    //예외 정의 : 유효하지 않은 계산식
+    public static class InvalidExpressionException extends Exception {
+        public InvalidExpressionException(String message) {
+            super(message);
         }
-}
-public static class InvalidExpressionException extends Exception {
-    InvalidExpressionException(String message) {
-        super(message);    
     }
-}
 
-    public static String calc(String exp) throws DivisideByZeroException, InvalidExpressionException{
+    //예외 정의 : 0으로 나누었을 때
+    public static class DivisionByZeroException extends Exception {
+        public DivisionByZeroException(String message) {
+            super(message);
+        }
+    }
+
+    public static String calc(String exp) throws InvalidExpressionException, DivisionByZeroException {
         StringTokenizer st = new StringTokenizer(exp, " ");
-        if (st.countTokens() != 3)
-            throw new InvalidExpressionException("Invalid expression");
-        String res = "";
+        if (st.countTokens() != 3) {
+            throw new InvalidExpressionException("Invalid expression format : " + exp + ". Enter just format like (a + b)");
+        }
+
         int op1 = Integer.parseInt(st.nextToken());
         String opcode = st.nextToken();
         int op2 = Integer.parseInt(st.nextToken());
+
         switch (opcode) {
             case "+":
-                res = Integer.toString(op1 + op2);
-                break;
+                return Integer.toString(op1 + op2);
             case "-":
-                res = Integer.toString(op1 - op2);
-                break;
+                return Integer.toString(op1 - op2);
             case "*":
-                res = Integer.toString(op1 * op2);
-                break;
+                return Integer.toString(op1 * op2);
             case "/":
-                if(op2==0)
-                    throw new DivisideByZeroException();
-                res = Integer.toString(op1/op2);
-                break;
+                if (op2 == 0) {
+                    throw new DivisionByZeroException("Division by zero is not allowed.");
+                }
+                return Integer.toString(op1 / op2);
             default:
-                throw new InvalidExpressionException("Invalid opcode"+opcode);
+                throw new InvalidExpressionException("Invalid operator(" + opcode+")");
         }
-        return res;
     }
 
     public static void main(String[] args) {
@@ -54,7 +56,7 @@ public static class InvalidExpressionException extends Exception {
                 Socket socket = listener.accept();
                 System.out.println("연결되었습니다.");
 
-                Thread clientThread = new Thread(new ClientHandler(socket));
+                Thread clientThread = new Thread(new ClientHandler(socket));//socket에 대해서 Thread를 객체를 생성
                 clientThread.start();
             }
         } catch (IOException e) {
@@ -82,6 +84,7 @@ public static class InvalidExpressionException extends Exception {
             BufferedWriter out = null;
 
             try {
+                //입출력 버퍼, 이를 통해 출력해야 Client에 출력
                 in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
 
@@ -92,13 +95,11 @@ public static class InvalidExpressionException extends Exception {
                         break;
                     }
                     System.out.println(inputMessage);
-                    try{
-                    String res = calc(inputMessage);
-                    out.write(res + "\n");
-                    } catch(DivisideByZeroException e){
-                        out.write(e.getMessage());
-                    }catch(InvalidExpressionException e2){
-                        out.write(e2.getMessage());
+                    try {
+                        String res = calc(inputMessage);
+                        out.write(res + "\n");
+                    } catch (InvalidExpressionException | DivisionByZeroException e) {
+                        out.write("Error : " + e.getMessage() + "\n");//\n이 없으면 출력되지 않음
                     }
                     out.flush();
                 }
