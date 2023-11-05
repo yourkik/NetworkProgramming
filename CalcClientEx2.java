@@ -9,7 +9,29 @@ public class CalcClientEx2 {
         Socket socket = null;
         Scanner scanner = new Scanner(System.in);
         try {
-            socket = new Socket("localhost", 9999);
+            //default IP, port number, 따로 저장하여 사용
+            String serverIP = "localhost";
+            int serverPort = 9999;
+
+            //Server_info.dat을 통해 server 정보를 가져오는 코드 try/catch를 사용해 파일 정보가 잘못되거나 이름이 잘못됬을 때 예외 처리
+            try {
+                File configFile = new File("Server_info.dat");
+                if (configFile.exists()) {
+                    Scanner configScanner = new Scanner(configFile);
+                    if (configScanner.hasNext()) {
+                        serverIP = configScanner.next();
+                    }
+                    if (configScanner.hasNextInt()) {
+                        serverPort = configScanner.nextInt();
+                    }
+                    configScanner.close();
+                    System.out.println("Connection for Server_infor.dat");
+                }
+            } catch (IOException e) {
+                System.out.println("Error : Can't read Server_info.dat");
+            }
+
+            socket = new Socket(serverIP, serverPort);
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
             while (true) {
@@ -23,7 +45,7 @@ public class CalcClientEx2 {
                 out.write(outputMessage + "\n"); // 키보드에서 읽은 수식 문자열 전송
                 out.flush();
                 String inputMessage = in.readLine(); // 서버로부터 계산 결과 수신
-                System.out.println("계산 결과: " + inputMessage);
+                System.out.println("Result : " + inputMessage);
             }
         } catch (IOException e) {
             System.out.println(e.getMessage());
@@ -33,7 +55,7 @@ public class CalcClientEx2 {
                 if (socket != null)
                     socket.close(); // 클라이언트 소켓 닫기
             } catch (IOException e) {
-                System.out.println("서버와 채팅 중 오류가 발생했습니다.");
+                System.out.println("Erro : Error in chating with server.");
             }
         }
     }

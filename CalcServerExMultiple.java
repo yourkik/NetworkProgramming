@@ -1,4 +1,5 @@
 //Server_info.dat을 client에서 생성해야하는지 Server에서 생성해야하는지 의문
+//Protocol이 상태 메세지를 의미? -> 이에 따른 상태 코드를 출력하도록 변경할지 선택 필요
 import java.io.*;
 import java.net.*;
 import java.util.*;
@@ -34,7 +35,7 @@ public class CalcServerExMultiple {
         StringTokenizer st = new StringTokenizer(exp, " ");
         if (st.countTokens() != 3) {
             //계산식 형태에 예외 발생
-            throw new InvalidExpressionException("Invalid expression format : " + exp + ". Enter just format like (a + b)");
+            throw new InvalidExpressionException(RESPONSE_ERROR+" : Invalid expression format : " + exp + ". Enter just format like (a + b)");
         }
 
         String res="";
@@ -47,19 +48,23 @@ public class CalcServerExMultiple {
             case "+":
                 res = Integer.toString(op1 + op2);
                 responseType=COMMAND_ADD;
+                break;
             case "-":
                 res = Integer.toString(op1 - op2);
                 responseType=COMMAND_SUBTRACT;
+                break;
             case "*":
                 res = Integer.toString(op1 * op2);
                 responseType=COMMAND_MULTIPLY;
+                break;
             case "/":
                 if (op2 == 0) {
                     //0으로 나누는 예외
-                    throw new DivisionByZeroException("Division by zero is not allowed.");
+                    throw new DivisionByZeroException(RESPONSE_ERROR +" : Division by zero is not allowed.");
                 }
                 res = Integer.toString(op1 / op2);
                 responseType=COMMAND_DIVIDE;
+                break;
             //default에서 throw가 발생하면 아래 return을 무시 -> error 발생 -> res에 error를 넣고 이를 검출해 throw 발생
             default:
                 res="error";
@@ -68,9 +73,9 @@ public class CalcServerExMultiple {
 
         if(res=="error"){
             //저장된 기호가 아닐 때 발생하는 예외
-            throw new InvalidExpressionException("Invalid operator(" + opcode+")");
+            throw new InvalidExpressionException(responseType + " : Invalid operator(" + opcode+")");
         }
-        return responseType+" -> "+res;
+        return responseType+" : "+res;
     }
 
     public static void main(String[] args) {
@@ -129,7 +134,7 @@ public class CalcServerExMultiple {
                         String res = calc(inputMessage);
                         out.write(res + "\n");
                     } catch (InvalidExpressionException | DivisionByZeroException e) {
-                        out.write("Error : " + e.getMessage() + "\n");//\n이 없으면 출력되지 않음
+                        out.write(e.getMessage() + "\n");//\n이 없으면 출력되지 않음
                     }
                     out.flush();
                 }
