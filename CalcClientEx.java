@@ -9,7 +9,28 @@ public class CalcClientEx {
         Socket socket = null;
         Scanner scanner = new Scanner(System.in);
         try {
-            socket = new Socket("localhost", 9999);
+            //default IP, port number, 따로 저장하여 사용
+            String serverIP = "localhost";
+            int serverPort = 9999;
+
+            //Server_info.dat을 통해 server 정보를 가져오는 코드 try/catch를 사용해 파일 정보가 잘못되거나 이름이 잘못됬을 때 예외 처리
+            try {
+                File configFile = new File("Server_info.dat");
+                if (configFile.exists()) {
+                    Scanner configScanner = new Scanner(configFile);
+                    if (configScanner.hasNext()) {
+                        serverIP = configScanner.next();
+                    }
+                    if (configScanner.hasNextInt()) {
+                        serverPort = configScanner.nextInt();
+                    }
+                    configScanner.close();
+                }
+            } catch (IOException e) {
+                System.out.println("Error in reading Server_infor.dat so using default value");
+            }
+
+            socket = new Socket(serverIP, serverPort);
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
             while (true) {
