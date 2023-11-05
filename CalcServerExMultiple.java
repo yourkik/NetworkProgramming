@@ -1,9 +1,10 @@
+//Server_info.dat을 client에서 생성해야하는지 Server에서 생성해야하는지 의문
 import java.io.*;
 import java.net.*;
 import java.util.*;
 
-//server info 부분 미완성
 public class CalcServerExMultiple {
+    //예외는 message를 통해 구현(하나의 예외로 여러 예외를 처리하기 위함 -> DivisionByZero의 경우 변경 가능하나 통일함)
     //예외 정의 : 유효하지 않은 계산식
     public static class InvalidExpressionException extends Exception {
         public InvalidExpressionException(String message) {
@@ -18,31 +19,58 @@ public class CalcServerExMultiple {
         }
     }
 
+    //명령 및 응답 프로토콜 정의
+    public static final String COMMAND_ADD = "ADD";
+    public static final String COMMAND_SUBTRACT = "SUB";
+    public static final String COMMAND_MULTIPLY = "MUL";
+    public static final String COMMAND_DIVIDE = "DIV";
+    public static final String RESPONSE_ERROR = "ERROR";
+
+    //Input : exp(계산식이 저장된 string)
+    //Output : res(계산 진행 후의 값을 저장하는 String)
+    //계산을 진행하는 함수로 들어온 exp(계산식)을 Token을 통해 공백을 기준으로 분할 후 숫자로 변환해 계산 이후 출력
+    //InvalidException과 DivisionByZeroException을 통해 예외 처리
     public static String calc(String exp) throws InvalidExpressionException, DivisionByZeroException {
         StringTokenizer st = new StringTokenizer(exp, " ");
         if (st.countTokens() != 3) {
+            //계산식 형태에 예외 발생
             throw new InvalidExpressionException("Invalid expression format : " + exp + ". Enter just format like (a + b)");
         }
 
+        String res="";
+        String responseType;
         int op1 = Integer.parseInt(st.nextToken());
         String opcode = st.nextToken();
         int op2 = Integer.parseInt(st.nextToken());
 
         switch (opcode) {
             case "+":
-                return Integer.toString(op1 + op2);
+                res = Integer.toString(op1 + op2);
+                responseType=COMMAND_ADD;
             case "-":
-                return Integer.toString(op1 - op2);
+                res = Integer.toString(op1 - op2);
+                responseType=COMMAND_SUBTRACT;
             case "*":
-                return Integer.toString(op1 * op2);
+                res = Integer.toString(op1 * op2);
+                responseType=COMMAND_MULTIPLY;
             case "/":
                 if (op2 == 0) {
+                    //0으로 나누는 예외
                     throw new DivisionByZeroException("Division by zero is not allowed.");
                 }
-                return Integer.toString(op1 / op2);
+                res = Integer.toString(op1 / op2);
+                responseType=COMMAND_DIVIDE;
+            //default에서 throw가 발생하면 아래 return을 무시 -> error 발생 -> res에 error를 넣고 이를 검출해 throw 발생
             default:
-                throw new InvalidExpressionException("Invalid operator(" + opcode+")");
+                res="error";
+                responseType=RESPONSE_ERROR;
         }
+
+        if(res=="error"){
+            //저장된 기호가 아닐 때 발생하는 예외
+            throw new InvalidExpressionException("Invalid operator(" + opcode+")");
+        }
+        return responseType+" -> "+res;
     }
 
     public static void main(String[] args) {
@@ -74,10 +102,12 @@ public class CalcServerExMultiple {
     private static class ClientHandler implements Runnable {
         private Socket socket;
 
+        //ClientHander에 대한 생성자
         public ClientHandler(Socket socket) {
             this.socket = socket;
         }
 
+        //Runnable에 있는 run 함수 override
         @Override
         public void run() {
             BufferedReader in = null;
