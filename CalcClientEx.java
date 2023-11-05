@@ -25,6 +25,7 @@ public class CalcClientEx {
                         serverPort = configScanner.nextInt();
                     }
                     configScanner.close();
+                    System.out.println("Connection for Server_infor.dat");
                 }
             } catch (IOException e) {
                 System.out.println("Error in reading Server_infor.dat so using default value");
