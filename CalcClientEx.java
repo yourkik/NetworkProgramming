@@ -29,7 +29,7 @@ public class CalcClientEx {
                     System.out.println("Connection for Server_infor.dat");
                 }
             } catch (IOException e) {
-                System.out.println("Error : Can't read Server_info.dat");
+                System.out.println("Error : Can't read Server_info.dat(Status Code : 404)");
             }
 
             socket = new Socket(serverIP, serverPort);
@@ -47,9 +47,10 @@ public class CalcClientEx {
                     out.flush();
                     String inputMessage = in.readLine(); // 서버로부터 계산 결과 수신
                     String splitMessage[] = inputMessage.split(",");
-                    if (splitMessage[0].equals("200")) {
+
+                    if (splitMessage[0].equals("200")) {//Error가 없을 때
                         System.out.println("Result : " + splitMessage[1] + "(Status Code : " + splitMessage[0] + ")");
-                    } else {
+                    } else {//Error가 있을 때
                         System.out.println("ERROR : " + splitMessage[1] + "(Status Code : " + splitMessage[0] + ")");
                     }
                 }
@@ -62,7 +63,7 @@ public class CalcClientEx {
                 if (socket != null)
                     socket.close(); // 클라이언트 소켓 닫기
             } catch (IOException e) {
-                System.out.println("Error : Error in chating with server.");
+                System.out.println("Error : Error in chating with server.(Status Code : 500)");
             }
         }
     }
